@@ -27,11 +27,6 @@ spec:
     annotations:
       # Make it clear to kapp that it's okay to delete the auto-generated secret
       kapp.k14s.io/owned-for-deletion: ""
-      # Make the secret versioned so hopefully users of it can track updates
-      kapp.k14s.io/versioned: ""
-      # Keep original or cert manager will freak out
-      kapp.k14s.io/versioned-keep-original: ""
-      # Or not be versioned at all, lolz
 ---
 # This makes the auto-generated secret owned in kapp
 apiVersion: kapp.k14s.io/v1alpha1
@@ -42,3 +37,21 @@ ownershipLabelRules:
   - anyMatcher:
       matchers:
         - apiVersionKindMatcher: {apiVersion: cert-manager.io/v1, kind: Certificate}
+# Have kapp actually detect good/bad status for the Cert resources on if it made secret or not
+waitRules:
+- supportsObservedGeneration: false
+  conditionMatchers:
+  - type: Ready
+    status: "False"
+    failure: true
+    supportsObservedGeneration: true
+  - type: Issuer
+    status: "False"
+    failure: true
+    supportsObservedGeneration: true
+  - type: Ready
+    status: "True"
+    success: true
+    supportsObservedGeneration: true
+  resourceMatchers:
+  - apiVersionKindMatcher: {apiVersion: cert-manager.io/v1, kind: Certificate}
